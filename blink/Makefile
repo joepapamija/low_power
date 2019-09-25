@@ -18,8 +18,8 @@
 ##
 
 BINARY = main
-
+SRCDIR = src
 LDSCRIPT = ld/stm32-h103.ld
+OUTPUTDIR = build
 
 include Makefile.include
-

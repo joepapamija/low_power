@@ -38,6 +38,7 @@ AS		:= $(PREFIX)as
 OBJCOPY		:= $(PREFIX)objcopy
 OBJDUMP		:= $(PREFIX)objdump
 GDB		:= $(PREFIX)gdb
+SIZE	:= $(PREFIX)size
 STFLASH		= $(shell which st-flash)
 STYLECHECK	:= /checkpatch.pl
 STYLECHECKFLAGS	:= --no-tree -f --terse --mailback
@@ -50,8 +51,7 @@ CSTD		?= -std=c99
 ###############################################################################
 # Source files
 
-OBJS		+= $(BINARY).o
-
+OBJS += $(OUTPUTDIR)/$(BINARY).o
 
 ifeq ($(strip $(OPENCM3_DIR)),)
 # user has not specified the library path, so we try to detect it
@@ -147,11 +147,11 @@ LDLIBS		+= -Wl,--start-group -lc -lgcc -lnosys -Wl,--end-group
 
 all: elf
 
-elf: $(BINARY).elf
-bin: $(BINARY).bin
-hex: $(BINARY).hex
-srec: $(BINARY).srec
-list: $(BINARY).list
+elf: $(OUTPUTDIR)/$(BINARY).elf
+bin: $(OUTPUTDIR)/$(BINARY).bin
+hex: $(OUTPUTDIR)/$(BINARY).hex
+srec: $(OUTPUTDIR)/$(BINARY).srec
+list: $(OUTPUTDIR)/$(BINARY).list
 GENERATED_BINARIES=$(BINARY).elf $(BINARY).bin $(BINARY).hex $(BINARY).srec $(BINARY).list $(BINARY).map
 
 images: $(BINARY).images
@@ -180,44 +180,47 @@ endif
 print-%:
 	@echo $*=$($*)
 
-%.images: %.bin %.hex %.srec %.list %.map
+%.images: $(OUTPUTDIR)/%.bin $(OUTPUTDIR)/%.hex $(OUTPUTDIR)/%.srec $(OUTPUTDIR)/%.list $(OUTPUTDIR)/%.map
 	@#printf "*** $* images generated ***\n"
 
-%.bin: %.elf
+$(OUTPUTDIR)/%.bin: $(OUTPUTDIR)/%.elf
 	@#printf "  OBJCOPY $(*).bin\n"
-	$(Q)$(OBJCOPY) -Obinary $(*).elf $(*).bin
+	$(Q)$(OBJCOPY) -Obinary $(OUTPUTDIR)/$(*).elf $(OUTPUTDIR)/$(*).bin
 
-%.hex: %.elf
+$(OUTPUTDIR)/%.hex: $(OUTPUTDIR)/%.elf
 	@#printf "  OBJCOPY $(*).hex\n"
-	$(Q)$(OBJCOPY) -Oihex $(*).elf $(*).hex
+	$(Q)$(OBJCOPY) -Oihex $(OUTPUTDIR)/$(*).elf $(OUTPUTDIR)/$(*).hex
 
-%.srec: %.elf
+$(OUTPUTDIR)/%.srec: $(OUTPUTDIR)/%.elf
 	@#printf "  OBJCOPY $(*).srec\n"
-	$(Q)$(OBJCOPY) -Osrec $(*).elf $(*).srec
+	$(Q)$(OBJCOPY) -Osrec $(OUTPUTDIR)/$(*).elf $(OUTPUTDIR)/$(*).srec
 
-%.list: %.elf
+$(OUTPUTDIR)/%.list: $(OUTPUTDIR)/%.elf
 	@#printf "  OBJDUMP $(*).list\n"
-	$(Q)$(OBJDUMP) -S $(*).elf > $(*).list
+	$(Q)$(OBJDUMP) -S $(OUTPUTDIR)/$(*).elf > $(OUTPUTDIR)/$(*).list
 
-%.elf %.map: $(OBJS) $(LDSCRIPT) $(OPENCM3_DIR)/lib/lib$(LIBNAME).a
+$(OUTPUTDIR)/%.elf $(OUTPUTDIR)/%.map: $(OBJS) $(LDSCRIPT) $(OPENCM3_DIR)/lib/lib$(LIBNAME).a
 	@#printf "  LD      $(*).elf\n"
-	$(Q)$(LD) $(TGT_LDFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -o $(*).elf
+	$(Q)$(LD) $(TGT_LDFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -o $(OUTPUTDIR)/$(*).elf
 
-%.o: %.c
+$(OUTPUTDIR)/%.o: $(SRCDIR)/%.c
 	@#printf "  CC      $(*).c\n"
-	$(Q)$(CC) $(TGT_CFLAGS) $(CFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $(*).o -c $(*).c
+	$(Q)$(CC) $(TGT_CFLAGS) $(CFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $(OUTPUTDIR)/$(*).o -c $(SRCDIR)/$(*).c
 
-%.o: %.cxx
+$(OUTPUTDIR)/%.o: $(SRCDIR)/%.cxx
 	@#printf "  CXX     $(*).cxx\n"
-	$(Q)$(CXX) $(TGT_CXXFLAGS) $(CXXFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $(*).o -c $(*).cxx
+	$(Q)$(CXX) $(TGT_CXXFLAGS) $(CXXFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $(OUTPUTDIR)/$(*).o -c $(SRCDIR)/$(*).cxx
 
-%.o: %.cpp
+$(OUTPUTDIR)/%.o: $(SRCDIR)/%.cpp
 	@#printf "  CXX     $(*).cpp\n"
-	$(Q)$(CXX) $(TGT_CXXFLAGS) $(CXXFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $(*).o -c $(*).cpp
+	$(Q)$(CXX) $(TGT_CXXFLAGS) $(CXXFLAGS) $(TGT_CPPFLAGS) $(CPPFLAGS) -o $(OUTPUTDIR)/$(*).o -c $(SRCDIR)/$(*).cpp
+
+%.size:
+	$(Q)$(SIZE) $(OUTPUTDIR)/$(*).elf
 
 clean:
 	@#printf "  CLEAN\n"
-	$(Q)$(RM) $(GENERATED_BINARIES) generated.* $(OBJS) $(OBJS:%.o=%.d)
+	$(Q)$(RM) $(OUTPUTDIR)/$(GENERATED_BINARIES) generated.* $(OBJS) $(OBJS:%.o=%.d)
 
 stylecheck: $(STYLECHECKFILES:=.stylecheck)
 styleclean: $(STYLECHECKFILES:=.styleclean)
