@@ -139,11 +139,11 @@ $(BUILD_DIR)/%.o: %.S
 
 $(PROJECT).elf: $(OBJS) $(LDSCRIPT) $(LIBDEPS)
 	@printf "  LD\t$@\n"
-	$(Q)$(LD) $(TGT_LDFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -o $(BUILD_DIR)/$@ 
+	$(Q)$(LD) $(TGT_LDFLAGS) $(LDFLAGS) $(OBJS) $(LDLIBS) -o $@
 
 %.bin: %.elf
 	@printf "  OBJCOPY\t$@\n"
-	$(Q)$(OBJCOPY) -O binary  $(BUILD_DIR)/$< $(BUILD_DIR)/$@
+	$(Q)$(OBJCOPY) -O binary  $< $@
 
 %.lss: %.elf
 	$(OBJDUMP) -h -S $< > $@
