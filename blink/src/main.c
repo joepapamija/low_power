@@ -11,11 +11,15 @@ int main(void) {
 	gpio_set(GPIOC, PIN_LED);
 
 	while(1) {
+		gpio_set(GPIOC, PIN_LED);
 		/* wait a little bit */
+		for (int i = 0; i < 80000; i++) {
+			__asm__("nop");
+		}
+		gpio_clear(GPIOC, PIN_LED);
+
 		for (int i = 0; i < 800000; i++) {
 			__asm__("nop");
 		}
-		
-		gpio_toggle(GPIOC, PIN_LED);
 	}
 }
