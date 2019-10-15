@@ -7,6 +7,7 @@ CFILES = $(SRC_DIR)/main.c
 
 # TODO - you will need to edit these two lines!
 DEVICE=stm32f103c8t6
+OOCD = openocd
 OOCD_FILE = board/stm32f4discovery.cfg
 
 # You shouldn't have to edit anything below here.

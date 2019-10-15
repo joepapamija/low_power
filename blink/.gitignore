@@ -1,4 +1,5 @@
 bin/
+build/
 *.elf
 *.bin
 generated.*.ld
