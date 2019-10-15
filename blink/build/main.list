@@ -1,0 +1,282 @@
+
+build/main.elf:     file format elf32-littlearm
+
+
+Disassembly of section .text:
+
+08000000 <vector_table>:
+ 8000000:	00 50 00 20 1d 02 00 08 1b 02 00 08 19 02 00 08     .P. ............
+ 8000010:	19 02 00 08 19 02 00 08 19 02 00 08 00 00 00 00     ................
+	...
+ 800002c:	1b 02 00 08 1b 02 00 08 00 00 00 00 1b 02 00 08     ................
+ 800003c:	1b 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 800004c:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 800005c:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 800006c:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 800007c:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 800008c:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 800009c:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 80000ac:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 80000bc:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 80000cc:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 80000dc:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 80000ec:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 80000fc:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 800010c:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 800011c:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 800012c:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 800013c:	19 02 00 08 19 02 00 08 19 02 00 08 19 02 00 08     ................
+ 800014c:	19 02 00 08                                         ....
+
+08000150 <main>:
+#define PIN_LED	(1<<13)
+
+void delay_ms(uint32_t ms);
+
+int main(void)
+{
+ 8000150:	b508      	push	{r3, lr}
+	//rcc_clock_setup_in_hse_8mhz_out_24mhz();
+	rcc_periph_clock_enable(RCC_GPIOC);
+ 8000152:	f44f 7041 	mov.w	r0, #772	; 0x304
+ 8000156:	f000 f852 	bl	80001fe <rcc_periph_clock_enable>
+
+	gpio_set_mode(GPIOC, 
+ 800015a:	f44f 5300 	mov.w	r3, #8192	; 0x2000
+ 800015e:	2200      	movs	r2, #0
+ 8000160:	2102      	movs	r1, #2
+ 8000162:	4807      	ldr	r0, [pc, #28]	; (8000180 <main+0x30>)
+ 8000164:	f000 f80e 	bl	8000184 <gpio_set_mode>
+		GPIO_MODE_OUTPUT_2_MHZ, 
+		GPIO_CNF_OUTPUT_PUSHPULL, 
+		PIN_LED);
+	gpio_clear(GPIOC, PIN_LED);
+ 8000168:	f44f 5100 	mov.w	r1, #8192	; 0x2000
+ 800016c:	4804      	ldr	r0, [pc, #16]	; (8000180 <main+0x30>)
+ 800016e:	f000 f83a 	bl	80001e6 <gpio_clear>
+
+	for(;;)
+	{
+		gpio_toggle(GPIOC, PIN_LED);
+ 8000172:	4c03      	ldr	r4, [pc, #12]	; (8000180 <main+0x30>)
+ 8000174:	f44f 5100 	mov.w	r1, #8192	; 0x2000
+ 8000178:	4620      	mov	r0, r4
+ 800017a:	f000 f837 	bl	80001ec <gpio_toggle>
+ 800017e:	e7f9      	b.n	8000174 <main+0x24>
+ 8000180:	40011000 	.word	0x40011000
+
+08000184 <gpio_set_mode>:
+	     If multiple pins are to be set, use bitwise OR '|' to separate
+	     them.
+*/
+
+void gpio_set_mode(uint32_t gpioport, uint8_t mode, uint8_t cnf, uint16_t gpios)
+{
+ 8000184:	e92d 43f0 	stmdb	sp!, {r4, r5, r6, r7, r8, r9, lr}
+	/*
+	 * We want to set the config only for the pins mentioned in gpios,
+	 * but keeping the others, so read out the actual config first.
+	 */
+	crl = GPIO_CRL(gpioport);
+	crh = GPIO_CRH(gpioport);
+ 8000188:	f64f 77e0 	movw	r7, #65504	; 0xffe0
+ 800018c:	2600      	movs	r6, #0
+
+		/* Use tmp32 to either modify crl or crh. */
+		tmp32 = (i < 8) ? crl : crh;
+
+		/* Modify bits are needed. */
+		tmp32 &= ~(0xf << offset);	/* Clear the bits first. */
+ 800018e:	f04f 080f 	mov.w	r8, #15
+{
+ 8000192:	4696      	mov	lr, r2
+ 8000194:	469c      	mov	ip, r3
+	crl = GPIO_CRL(gpioport);
+ 8000196:	6802      	ldr	r2, [r0, #0]
+	crh = GPIO_CRH(gpioport);
+ 8000198:	6843      	ldr	r3, [r0, #4]
+		if (!((1 << i) & gpios)) {
+ 800019a:	fa4c f406 	asr.w	r4, ip, r6
+ 800019e:	07e4      	lsls	r4, r4, #31
+ 80001a0:	d518      	bpl.n	80001d4 <gpio_set_mode+0x50>
+		offset = (i < 8) ? (i * 4) : ((i - 8) * 4);
+ 80001a2:	2e07      	cmp	r6, #7
+ 80001a4:	b2b4      	uxth	r4, r6
+ 80001a6:	bf8b      	itete	hi
+ 80001a8:	463c      	movhi	r4, r7
+ 80001aa:	4691      	movls	r9, r2
+ 80001ac:	4699      	movhi	r9, r3
+ 80001ae:	00a4      	lslls	r4, r4, #2
+ 80001b0:	bf98      	it	ls
+ 80001b2:	b2a4      	uxthls	r4, r4
+		tmp32 &= ~(0xf << offset);	/* Clear the bits first. */
+ 80001b4:	fa08 f504 	lsl.w	r5, r8, r4
+ 80001b8:	ea29 0905 	bic.w	r9, r9, r5
+		tmp32 |= (mode << offset) | (cnf << (offset + 2));
+ 80001bc:	1ca5      	adds	r5, r4, #2
+ 80001be:	fa0e f505 	lsl.w	r5, lr, r5
+ 80001c2:	fa01 f404 	lsl.w	r4, r1, r4
+ 80001c6:	432c      	orrs	r4, r5
+ 80001c8:	ea44 0409 	orr.w	r4, r4, r9
+
+		/* Write tmp32 into crl or crh, leave the other unchanged. */
+		crl = (i < 8) ? tmp32 : crl;
+		crh = (i >= 8) ? tmp32 : crh;
+ 80001cc:	2e08      	cmp	r6, #8
+ 80001ce:	bf2c      	ite	cs
+ 80001d0:	4623      	movcs	r3, r4
+ 80001d2:	4622      	movcc	r2, r4
+ 80001d4:	3601      	adds	r6, #1
+ 80001d6:	3704      	adds	r7, #4
+	for (i = 0; i < 16; i++) {
+ 80001d8:	2e10      	cmp	r6, #16
+ 80001da:	b2bf      	uxth	r7, r7
+ 80001dc:	d1dd      	bne.n	800019a <gpio_set_mode+0x16>
+	}
+
+	GPIO_CRL(gpioport) = crl;
+ 80001de:	6002      	str	r2, [r0, #0]
+	GPIO_CRH(gpioport) = crh;
+ 80001e0:	6043      	str	r3, [r0, #4]
+ 80001e2:	e8bd 83f0 	ldmia.w	sp!, {r4, r5, r6, r7, r8, r9, pc}
+
+080001e6 <gpio_clear>:
+	     If multiple pins are to be changed, use bitwise OR '|' to separate
+	     them.
+*/
+void  gpio_clear(uint32_t gpioport, uint16_t gpios)
+{
+	GPIO_BSRR(gpioport) = (gpios << 16);
+ 80001e6:	0409      	lsls	r1, r1, #16
+ 80001e8:	6101      	str	r1, [r0, #16]
+ 80001ea:	4770      	bx	lr
+
+080001ec <gpio_toggle>:
+	     If multiple pins are to be changed, use bitwise OR '|' to separate
+	     them.
+*/
+void gpio_toggle(uint32_t gpioport, uint16_t gpios)
+{
+	uint32_t port = GPIO_ODR(gpioport);
+ 80001ec:	68c3      	ldr	r3, [r0, #12]
+	GPIO_BSRR(gpioport) = ((port & gpios) << 16) | (~port & gpios);
+ 80001ee:	ea03 0201 	and.w	r2, r3, r1
+ 80001f2:	ea21 0103 	bic.w	r1, r1, r3
+ 80001f6:	ea41 4102 	orr.w	r1, r1, r2, lsl #16
+ 80001fa:	6101      	str	r1, [r0, #16]
+ 80001fc:	4770      	bx	lr
+
+080001fe <rcc_periph_clock_enable>:
+ * For available constants, see #rcc_periph_clken (RCC_UART1 for example)
+ */
+
+void rcc_periph_clock_enable(enum rcc_periph_clken clken)
+{
+	_RCC_REG(clken) |= _RCC_BIT(clken);
+ 80001fe:	0943      	lsrs	r3, r0, #5
+ 8000200:	f000 021f 	and.w	r2, r0, #31
+ 8000204:	2001      	movs	r0, #1
+ 8000206:	f103 4380 	add.w	r3, r3, #1073741824	; 0x40000000
+ 800020a:	f503 3304 	add.w	r3, r3, #135168	; 0x21000
+ 800020e:	6819      	ldr	r1, [r3, #0]
+ 8000210:	4090      	lsls	r0, r2
+ 8000212:	4308      	orrs	r0, r1
+ 8000214:	6018      	str	r0, [r3, #0]
+ 8000216:	4770      	bx	lr
+
+08000218 <blocking_handler>:
+	}
+
+}
+
+void blocking_handler(void)
+{
+ 8000218:	e7fe      	b.n	8000218 <blocking_handler>
+
+0800021a <null_handler>:
+	while (1);
+}
+
+void null_handler(void)
+{
+ 800021a:	4770      	bx	lr
+
+0800021c <reset_handler>:
+	for (src = &_data_loadaddr, dest = &_data;
+ 800021c:	2200      	movs	r2, #0
+{
+ 800021e:	b538      	push	{r3, r4, r5, lr}
+ 8000220:	4918      	ldr	r1, [pc, #96]	; (8000284 <reset_handler+0x68>)
+ 8000222:	4c19      	ldr	r4, [pc, #100]	; (8000288 <reset_handler+0x6c>)
+	for (src = &_data_loadaddr, dest = &_data;
+ 8000224:	4819      	ldr	r0, [pc, #100]	; (800028c <reset_handler+0x70>)
+ 8000226:	1853      	adds	r3, r2, r1
+ 8000228:	4283      	cmp	r3, r0
+ 800022a:	d317      	bcc.n	800025c <reset_handler+0x40>
+		*dest++ = 0;
+ 800022c:	2100      	movs	r1, #0
+	while (dest < &_ebss) {
+ 800022e:	4a18      	ldr	r2, [pc, #96]	; (8000290 <reset_handler+0x74>)
+ 8000230:	4293      	cmp	r3, r2
+ 8000232:	d317      	bcc.n	8000264 <reset_handler+0x48>
+	SCB_CCR |= SCB_CCR_STKALIGN;
+ 8000234:	4a17      	ldr	r2, [pc, #92]	; (8000294 <reset_handler+0x78>)
+	for (fp = &__preinit_array_start; fp < &__preinit_array_end; fp++) {
+ 8000236:	4c18      	ldr	r4, [pc, #96]	; (8000298 <reset_handler+0x7c>)
+	SCB_CCR |= SCB_CCR_STKALIGN;
+ 8000238:	6813      	ldr	r3, [r2, #0]
+	for (fp = &__preinit_array_start; fp < &__preinit_array_end; fp++) {
+ 800023a:	4d18      	ldr	r5, [pc, #96]	; (800029c <reset_handler+0x80>)
+	SCB_CCR |= SCB_CCR_STKALIGN;
+ 800023c:	f443 7300 	orr.w	r3, r3, #512	; 0x200
+ 8000240:	6013      	str	r3, [r2, #0]
+	for (fp = &__preinit_array_start; fp < &__preinit_array_end; fp++) {
+ 8000242:	42ac      	cmp	r4, r5
+ 8000244:	d311      	bcc.n	800026a <reset_handler+0x4e>
+ 8000246:	4c16      	ldr	r4, [pc, #88]	; (80002a0 <reset_handler+0x84>)
+	for (fp = &__init_array_start; fp < &__init_array_end; fp++) {
+ 8000248:	4d16      	ldr	r5, [pc, #88]	; (80002a4 <reset_handler+0x88>)
+ 800024a:	42ac      	cmp	r4, r5
+ 800024c:	d311      	bcc.n	8000272 <reset_handler+0x56>
+	(void)main();
+ 800024e:	f7ff ff7f 	bl	8000150 <main>
+	for (fp = &__fini_array_start; fp < &__fini_array_end; fp++) {
+ 8000252:	4c15      	ldr	r4, [pc, #84]	; (80002a8 <reset_handler+0x8c>)
+ 8000254:	4d15      	ldr	r5, [pc, #84]	; (80002ac <reset_handler+0x90>)
+ 8000256:	42ac      	cmp	r4, r5
+ 8000258:	d30f      	bcc.n	800027a <reset_handler+0x5e>
+}
+ 800025a:	bd38      	pop	{r3, r4, r5, pc}
+		*dest = *src;
+ 800025c:	5913      	ldr	r3, [r2, r4]
+ 800025e:	5053      	str	r3, [r2, r1]
+ 8000260:	3204      	adds	r2, #4
+ 8000262:	e7e0      	b.n	8000226 <reset_handler+0xa>
+		*dest++ = 0;
+ 8000264:	6019      	str	r1, [r3, #0]
+ 8000266:	3304      	adds	r3, #4
+ 8000268:	e7e2      	b.n	8000230 <reset_handler+0x14>
+		(*fp)();
+ 800026a:	f854 3b04 	ldr.w	r3, [r4], #4
+ 800026e:	4798      	blx	r3
+ 8000270:	e7e7      	b.n	8000242 <reset_handler+0x26>
+		(*fp)();
+ 8000272:	f854 3b04 	ldr.w	r3, [r4], #4
+ 8000276:	4798      	blx	r3
+ 8000278:	e7e7      	b.n	800024a <reset_handler+0x2e>
+		(*fp)();
+ 800027a:	f854 3b04 	ldr.w	r3, [r4], #4
+ 800027e:	4798      	blx	r3
+ 8000280:	e7e9      	b.n	8000256 <reset_handler+0x3a>
+ 8000282:	bf00      	nop
+ 8000284:	20000000 	.word	0x20000000
+ 8000288:	080002b0 	.word	0x080002b0
+ 800028c:	20000000 	.word	0x20000000
+ 8000290:	20000000 	.word	0x20000000
+ 8000294:	e000ed14 	.word	0xe000ed14
+ 8000298:	080002b0 	.word	0x080002b0
+ 800029c:	080002b0 	.word	0x080002b0
+ 80002a0:	080002b0 	.word	0x080002b0
+ 80002a4:	080002b0 	.word	0x080002b0
+ 80002a8:	080002b0 	.word	0x080002b0
+ 80002ac:	080002b0 	.word	0x080002b0
